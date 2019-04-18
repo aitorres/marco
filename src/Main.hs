@@ -50,17 +50,28 @@ getNewPhrase toks phrase first_prefix str max = do
           let new_prefix = (tail first_prefix) ++ [suffix]
           getNewPhrase toks phrase new_prefix (str ++ " " ++ suffix) (max - 1)
 
+{-|
+  Prints a small help message, containing the proper usage of the application
+-}
 printHelp :: IO ()
 printHelp = do
   progName <- getProgName
   putStrLn $ progName ++ " usage: " ++ progName ++ " <filename> <context length> <max length>"
 
+{-|
+  Performs a minor check of the arguments received from command line. If invalid,
+  shows the help message and quits.
+-}
 checkArgs :: [a] -> IO ()
 checkArgs [_, _, _] = return ()
 checkArgs _ = do
   printHelp
   exitFailure
 
+{-|
+  Prints a given string and immediately flushes the standard output, in order to ensure
+  I/O delays are kept to a minimum.
+-}
 properPrintLn :: String -> IO ()
 properPrintLn str = do
   putStrLn str
