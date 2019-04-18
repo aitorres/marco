@@ -10,6 +10,7 @@ Basic implementation of an arbitrary-length Markov Chain algorithm.
 -}
 
 module Markov (
+  Phrase,
   stringToPhrase,
   getPhrasePrefixes,
   getPrefixSuffixes
@@ -99,7 +100,7 @@ getPrefixSuffixes phrase prefix =
 getSuffixArray :: Phrase -> Int -> [DisjointMarkovToken]
 getSuffixArray (Phrase []) _ = []
 getSuffixArray (Phrase words) n
-  | length words >= n =
+  | length words > n =
     let prefix = take n words
         suffix = words !! n
         remainingWords = tail words
