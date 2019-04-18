@@ -18,9 +18,18 @@ module Markov (
 import Data.Char
 import Data.List.Split
 
+{-|
+  Custom data type to save a phrase as an array of separate,
+  possibly normalized words. Implements a concrete instance of Show
+  in order to print the phrase as faithfully as possible.
+-}
 data Phrase =
   Phrase [String]
-  deriving (Eq, Show)
+  deriving (Eq)
+instance Show Phrase where
+  show (Phrase []) = []
+  show (Phrase [x]) = x
+  show (Phrase (x:xs)) = x ++ " " ++ show (Phrase xs)
 
 data DisjointMarkovToken =
   DisjointMarkovToken ([String], String)
@@ -72,8 +81,8 @@ getPhraseTokens p n = compactSuffixArray $ (getSuffixArray p n)
   Given a phrase, returns an array with arrays of strings, each with the possible prefixes.
 -}
 getPhrasePrefixes :: Phrase -> Int -> [[String]]
-getPhrasePrefixes x n =
-  [y | (MarkovToken (y, _)) <- getPhraseTokens x n]
+getPhrasePrefixes p n =
+  [y | (MarkovToken (y, _)) <- getPhraseTokens p n]
 
 {-|
   Given a phrase and a prefix, returns such prefix suffixes if they exist.
@@ -90,7 +99,7 @@ getPrefixSuffixes phrase prefix =
 getSuffixArray :: Phrase -> Int -> [DisjointMarkovToken]
 getSuffixArray (Phrase []) _ = []
 getSuffixArray (Phrase words) n
-  | length words > n =
+  | length words >= n =
     let prefix = take n words
         suffix = words !! n
         remainingWords = tail words
