@@ -49,7 +49,8 @@ getNewPhrase phrase first_prefix str max = do
 
 printHelp :: IO ()
 printHelp = do
-  putStrLn "Help"
+  progName <- getProgName
+  putStrLn $ progName ++ " usage: " ++ progName ++ " <filename> <context length> <max length>"
 
 checkArgs :: [a] -> IO ()
 checkArgs [_, _, _] = return ()
