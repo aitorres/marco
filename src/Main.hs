@@ -13,6 +13,8 @@ and echoes such new phrase through the standard output.
 
 module Main (main) where
 
+import Data.Time.Clock.POSIX
+
 import Markov
 
 import System.Environment
@@ -34,6 +36,7 @@ getRandomElement x = do
 -}
 getNewPhrase :: Phrase -> [String] -> String -> Int -> IO (String)
 getNewPhrase phrase first_prefix str max = do
+  putStrLn $ "so far, you've got " ++ show (length str) ++ " words"
   let suffixes = getPrefixSuffixes phrase first_prefix
   case length suffixes of
     0 -> do
@@ -74,5 +77,10 @@ main = do
   let phrase = stringToPhrase inputPhrase
   let prefixes = getPhrasePrefixes phrase n
   first_prefix <- getRandomElement prefixes
+  putStrLn $ "Phrase generation: ENGAGED"
+  start_time <- getPOSIXTime
   nphrase <- getNewPhrase phrase first_prefix [] max
-  putStrLn nphrase
+  finish_time <- getPOSIXTime
+  putStrLn $ "Phrase generation: COMPLETED"
+  putStrLn $ "Time spent: " ++ (show (finish_time - start_time)) ++ "ms"
+  putStrLn $ "Your phrase is: " ++ nphrase
