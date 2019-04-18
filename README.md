@@ -35,7 +35,7 @@ Where
 
 * *filename* is the (absolute or relative) path to a file to be used as the base text
 * *context_length* is the amount of words to be considered as a "unit" in order to find the next suffix
-* *max_lenght* is an *approximate* (not necessarily exact) upper bound for the generated text. In practice, the text's length may vary from 0 (which would be a really bad scenario that might imply that youre base text is not adecuate for this task) to (*max_length* + *context_length*).
+* *max_length* is an *approximate* (not necessarily exact) upper bound for the generated text. In practice, the text's length may vary from 0 (which would be a really bad scenario that might imply that youre base text is not adecuate for this task) to (*max_length* + *context_length*).
 
 ## To-do list
 
