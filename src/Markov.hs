@@ -18,14 +18,13 @@ module Markov where
 -}
 getSuffixArray :: [String] -> Int -> [([String], String)]
 getSuffixArray [] _ = []
-getSuffixArray words n =
-  let enoughWords = length words > n in
-    if enoughWords then
-      let prefix = take n words
-          suffix = words !! (n)
-          remainingWords = tail words
-      in  (prefix, suffix) : getSuffixArray remainingWords n
-    else []
+getSuffixArray words n
+  | length words > n =
+    let prefix = take n words
+        suffix = words !! (n)
+        remainingWords = tail words
+    in  (prefix, suffix) : getSuffixArray remainingWords n
+  | otherwise = []
 
 {-|
   Given a suffix array, "compresses" the array in order to find common prefixes
@@ -49,4 +48,3 @@ compactSuffixArray arr =
 findAllSuffixes :: [([String], String)] -> [String] -> [String]
 findAllSuffixes arr prefix =
   [b | (a, b) <- arr, a == prefix]
-    
