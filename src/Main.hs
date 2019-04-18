@@ -15,6 +15,8 @@ module Main (main) where
 
 import Markov
 
+import System.Environment
+import System.Exit
 import System.Random
 import System.IO
 
@@ -45,23 +47,30 @@ getNewPhrase phrase first_prefix str max = do
           let new_prefix = (tail first_prefix) ++ [suffix]
           getNewPhrase phrase new_prefix (str ++ " " ++ suffix) (max - 1)
 
+printHelp :: IO ()
+printHelp = do
+  putStrLn "Help"
+
+checkArgs :: [a] -> IO ()
+checkArgs [_, _, _] = return ()
+checkArgs _ = do
+  printHelp
+  exitFailure
+
 {-|
   Main client for the application.
 -}
 main :: IO ()
 main = do
-  putStr "Phrase: "
-  hFlush stdout
-  input <- getLine
-  putStr "Context length: "
-  hFlush stdout
-  raw_n <- getLine
+  args <- getArgs
+  checkArgs args
+  let filename = args !! 0
+  let raw_n = args !! 1
+  let raw_max = args !! 2
+  inputPhrase <- readFile filename
   let n = read raw_n :: Int
-  putStr "Max length: "
-  hFlush stdout
-  raw_max <- getLine
   let max = read raw_max :: Int
-  let phrase = stringToPhrase input
+  let phrase = stringToPhrase inputPhrase
   let prefixes = getPhrasePrefixes phrase n
   first_prefix <- getRandomElement prefixes
   nphrase <- getNewPhrase phrase first_prefix [] max
