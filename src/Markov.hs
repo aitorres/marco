@@ -11,7 +11,6 @@ Basic implementation of an arbitrary-length Markov Chain algorithm.
 
 module Markov (
   stringToPhrase,
-  getPhraseTokens,
   getPhrasePrefixes,
   getPrefixSuffixes
 ) where
@@ -66,20 +65,22 @@ stringToPhrase x = Phrase (splitToArray x)
   Given a phrase, returns an array of MarkovTokens with all the prefixes
   and all of their suffixes
 -}
-getPhraseTokens :: Phrase -> [MarkovToken]
-getPhraseTokens x = compactSuffixArray $ getSuffixArray x 2
+getPhraseTokens :: Phrase -> Int -> [MarkovToken]
+getPhraseTokens p n = compactSuffixArray $ (getSuffixArray p n)
 
 {-|
   Given a phrase, returns an array with arrays of strings, each with the possible prefixes.
 -}
-getPhrasePrefixes :: Phrase -> [[String]]
-getPhrasePrefixes x = [y | (MarkovToken (y, _)) <- getPhraseTokens x]
+getPhrasePrefixes :: Phrase -> Int -> [[String]]
+getPhrasePrefixes x n =
+  [y | (MarkovToken (y, _)) <- getPhraseTokens x n]
 
 {-|
   Given a phrase and a prefix, returns such prefix suffixes if they exist.
 -}
 getPrefixSuffixes :: Phrase -> [String] -> [String]
-getPrefixSuffixes phrase prefix = [x | y <- [b | MarkovToken (a, b) <- getPhraseTokens phrase, a == prefix], x <- y]
+getPrefixSuffixes phrase prefix =
+  [x | y <- [b | MarkovToken (a, b) <- getPhraseTokens phrase (length prefix), a == prefix], x <- y]
 
 {-|
   Given an array of strings (words) and a context length,
