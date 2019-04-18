@@ -11,8 +11,6 @@ Basic implementation of an arbitrary-length Markov Chain algorithm.
 
 module Markov where
 
-import Data.List
-
 {-|
   Given an array of strings (words) and a context length,
   returns an array with each possible prefix (as an array) and the
