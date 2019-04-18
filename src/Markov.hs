@@ -11,9 +11,11 @@ Basic implementation of an arbitrary-length Markov Chain algorithm.
 
 module Markov (
   Phrase,
+  MarkovToken,
   stringToPhrase,
-  getPhrasePrefixes,
-  getPrefixSuffixes
+  getPhraseTokens,
+  getPhrasePrefixes',
+  getPrefixSuffixes'
 ) where
 
 import Data.Char
@@ -32,10 +34,19 @@ instance Show Phrase where
   show (Phrase [x]) = x
   show (Phrase (x:xs)) = x ++ " " ++ show (Phrase xs)
 
+{-|
+  Custom data type to save a pair of an arbitrary prefix
+  and one associated suffix.
+-}
 data DisjointMarkovToken =
   DisjointMarkovToken ([String], String)
   deriving (Eq, Show)
 
+{-|
+  Custom data type to save a pair of an arbitrary prefix
+  and an array of associated suffixes. Intended to be able to
+  be formed as a "join" / "fold" of several DisjointMarkovToken instances.
+-}
 data MarkovToken =
   MarkovToken ([String], [String])
   deriving (Eq, Show)
@@ -86,11 +97,27 @@ getPhrasePrefixes p n =
   [y | (MarkovToken (y, _)) <- getPhraseTokens p n]
 
 {-|
+  Alternative version of getPhrasePrefixes: given an array of MarkovTokens, returns an array
+  with arrays of strings, each with the possible prefixes.
+-}
+getPhrasePrefixes' :: [MarkovToken] -> [[String]]
+getPhrasePrefixes' toks =
+  [y | (MarkovToken (y, _)) <- toks]
+
+{-|
   Given a phrase and a prefix, returns such prefix suffixes if they exist.
 -}
 getPrefixSuffixes :: Phrase -> [String] -> [String]
 getPrefixSuffixes phrase prefix =
   [x | y <- [b | MarkovToken (a, b) <- getPhraseTokens phrase (length prefix), a == prefix], x <- y]
+
+{-|
+  Alternative version of getPrefixSuffixes: given an array of MarkovTokens, and a
+  prefix, returns such prefix suffixes if they exist.
+-}
+getPrefixSuffixes' :: [MarkovToken] -> [String] -> [String]
+getPrefixSuffixes' toks prefix =
+  [x | y <- [b | MarkovToken (a, b) <- toks, a == prefix], x <- y]
 
 {-|
   Given an array of strings (words) and a context length,
