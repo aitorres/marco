@@ -24,3 +24,5 @@ cabal.project.local~
 Main
 src/*.txt
 marco
+data/*
+trained-data/*
