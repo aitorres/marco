@@ -13,14 +13,16 @@ and echoes such new phrase through the standard output.
 
 module Main (main) where
 
+import Data.List.Split
 import Data.Time.Clock.POSIX
 
-import Markov
-
+import System.Directory
 import System.Environment
 import System.Exit
-import System.Random
 import System.IO
+import System.Random
+
+import Markov
 
 {-|
   Returns a random element out of an array.
@@ -62,11 +64,16 @@ printHelp = do
   Performs a minor check of the arguments received from command line. If invalid,
   shows the help message and quits.
 -}
-checkArgs :: [a] -> IO ()
-checkArgs [_, _, _] = return ()
-checkArgs _ = do
-  printHelp
-  exitFailure
+checkArgs :: [String] -> IO (String)
+checkArgs args = do
+  let trainSyntax = (length args == 3) && (args !! 0 == "train")
+  let genSyntax = (length args == 2) && (args !! 0 == "generate")
+
+  if (elem True [trainSyntax, genSyntax]) then
+    return (args !! 0)
+  else do
+    printHelp
+    exitFailure
 
 {-|
   Prints a given string and immediately flushes the standard output, in order to ensure
@@ -78,44 +85,113 @@ properPrintLn str = do
   hFlush stdout
 
 {-|
+  Joins the content of several training data files
+  into one string to be parsed afterwards.
+-}
+foldTrainingData :: FilePath -> [FilePath] -> IO (String)
+foldTrainingData directory files = do
+  let targetFile = (directory ++ "/" ++ (files !! 0)) in
+    case (length files) of
+      0 -> return ""
+      1 -> do
+        file <- readFile targetFile
+        return file
+      otherwise -> do
+        file <- readFile targetFile
+        remainingFiles <- foldTrainingData directory (tail files)
+        return (file ++ remainingFiles)
+
+{-|
+  Trains the markov generator with the contents of a given folder.
+  Assumes all the files are simple txt files.
+-}
+train :: FilePath -> Int -> IO ()
+train directory n = do
+  properPrintLn $ "Reading data files content and training into proper data structures"
+  pre_proc_start_time <- getPOSIXTime
+
+  foundFiles <- getDirectoryContents directory
+  let files = [x | x <- foundFiles, "txt" == last (splitOn "." x) ]
+
+  properPrintLn $ "Training files loaded into memory"
+  trainingData <- foldTrainingData directory files
+
+  properPrintLn $ "Training files parsed together. Training in process..."
+  let phrase = stringToPhrase trainingData
+  let tokens = getPhraseTokens phrase n
+  let prefixes = getPhrasePrefixes' tokens
+
+  -- Writes obtained data into disk
+  createDirectoryIfMissing True "trained-data"
+  writeFile "trained-data/phrase.txt" (show phrase)
+  writeFile "trained-data/tokens.txt" (show tokens)
+  writeFile "trained-data/prefixes.txt" (show prefixes)
+
+  pre_proc_finish_time <- getPOSIXTime
+  properPrintLn $ "Time spent (training): " ++ (show (pre_proc_finish_time - pre_proc_start_time)) ++ "\n"
+
+{-|
+  Checks if the required training files exist, and stops execution if they
+  don't, printing a helpful message to standard output.
+-}
+checkTrainingFiles :: IO ()
+checkTrainingFiles = do
+  checkTokens <- doesFileExist "trained-data/tokens.txt"
+  checkPhrase <- doesFileExist "trained-data/phrase.txt"
+  checkPrefixes <- doesFileExist "trained-data/prefixes.txt"
+
+  let checks = [checkTokens, checkPhrase, checkPrefixes]
+  case (elem False checks) of
+    True -> do
+      properPrintLn $ "Training data not found. Check help and train marco first."
+      exitFailure
+    otherwise ->
+      return ()
+
+{-|
   Main client for the application.
 -}
 main :: IO ()
 main = do
   -- Validates arguments (or exits with a help message if they are invalid)
   args <- getArgs
-  checkArgs args
+  execMode <- checkArgs args
 
-  -- Parses arguments
-  let filename = args !! 0
-  let raw_n = args !! 1
-  let raw_max = args !! 2
-  let n = read raw_n :: Int
-  let max = read raw_max :: Int
+  case execMode of
+    "train" -> do
+      -- Parses arguments
+      let foldername = args !! 1
+      let raw_n = args !! 2
+      let n = read raw_n :: Int
 
-  -- Reads filename
-  file_read_start_time <- getPOSIXTime
-  inputPhrase <- readFile filename
-  file_read_finish_time <- getPOSIXTime
-  properPrintLn $ "File properly loaded into memory after " ++ (show (file_read_finish_time - file_read_start_time))  ++ "\n"
+      -- Trains marco according to the given training dataset
+      train foldername n
+    "generate" -> do
+      -- Parses arguments
+      let raw_max = args !! 1
+      let max = read raw_max :: Int
 
-  -- Pre-processes the data
-  properPrintLn $ "Reading file's content and pre-processing into proper data structures"
-  pre_proc_start_time <- getPOSIXTime
-  let phrase = stringToPhrase inputPhrase
-  let tokens = getPhraseTokens phrase n
-  let prefixes = getPhrasePrefixes' tokens
-  first_prefix <- getRandomElement prefixes
-  pre_proc_finish_time <- getPOSIXTime
-  properPrintLn $ "Time spent (pre-processing): " ++ (show (pre_proc_finish_time - pre_proc_start_time)) ++ "\n"
+      -- Starts the new text generation
+      properPrintLn $ "Phrase generation: ENGAGED"
 
-  -- Generates the new text
-  properPrintLn $ "Phrase generation: ENGAGED"
-  proc_start_time <- getPOSIXTime
-  nphrase <- getNewPhrase tokens phrase first_prefix [] max
-  proc_finish_time <- getPOSIXTime
-  properPrintLn $ "Phrase generation: COMPLETED"
-  properPrintLn $ "Time spent (generation): " ++ (show (proc_finish_time - proc_start_time)) ++ "\n"
+      -- If the training files exist, reads and parses them
+      checkTrainingFiles
 
-  -- Reports the text and exits
-  properPrintLn $ "Your phrase is: " ++ nphrase
+      phraseStr <- readFile "trained-data/phrase.txt"
+      tokensStr <- readFile "trained-data/tokens.txt"
+      prefixesStr <- readFile "trained-data/prefixes.txt"
+
+      let phrase = read phraseStr :: Phrase
+      let tokens = read tokensStr :: [MarkovToken]
+      let prefixes = read prefixesStr :: [[String]]
+
+      -- Starts text generation
+      proc_start_time <- getPOSIXTime
+      first_prefix <- getRandomElement prefixes
+      nphrase <- getNewPhrase tokens phrase first_prefix [] max
+      proc_finish_time <- getPOSIXTime
+      properPrintLn $ "Phrase generation: COMPLETED"
+      properPrintLn $ "Time spent (generation): " ++ (show (proc_finish_time - proc_start_time)) ++ "\n"
+
+      -- Reports the text and exits
+      properPrintLn $ "Your phrase is: " ++ nphrase

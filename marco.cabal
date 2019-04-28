@@ -10,7 +10,7 @@ name:                marco
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.1.0.0
+version:             0.2.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            A Markov chains based poet bot.
@@ -57,7 +57,11 @@ executable marco
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.10 && <4.11, split, time, random
+  build-depends:       base >=4.10 && <4.11
+                     , split
+                     , time
+                     , random
+                     , directory
 
   -- Directories containing source files.
   hs-source-dirs:      src

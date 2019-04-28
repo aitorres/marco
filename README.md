@@ -2,6 +2,10 @@
 
 A Markov chains based poet bot.
 
+## Changelog
+
+The current version is **version 0.2.0.0**. [Click here to read the changelog](CHANGELOG.md).
+
 ## Build
 
 Using cabal is recommended, although not necessarily required, in order to build the program.
@@ -12,7 +16,7 @@ Using cabal is recommended, although not necessarily required, in order to build
 cabal build
 ```
 
-You will find the `marco` executable in _dist/build/marco/_.
+You can run the program with `cabal run`, or install it into your setup with `cabal install` and then run it with `marco`.
 
 ### With GHC
 
@@ -25,22 +29,30 @@ You will find the `marco` executable (unless renamed) in _src/_.
 
 ## Usage
 
-Assuming the program has been built properly and the executable is called `marco`:
+Assuming the program has been built properly and the executable is called `marco` (replace `marco` with `cabal run` if necessary):
+
+### Training the algorithm
 
 ```bash
-marco filename context_length max_length
+marco train foldername context_length
 ```
 
 Where
 
 * *filename* is the (absolute or relative) path to a file to be used as the base text
 * *context_length* is the amount of words to be considered as a "unit" in order to find the next suffix
+
+### Generating text
+
+```bash
+marco generate max_length
+```
+
 * *max_length* is an *approximate* (not necessarily exact) upper bound for the generated text. In practice, the text's length may vary from 0 (which would be a really bad scenario that might imply that youre base text is not adecuate for this task) to (*max_length* + *context_length*).
 
 ## To-do list
 
 * Improve performance
-* Persistent memory, if required
 * Bot
 * Normalize better
 * Exception handling
