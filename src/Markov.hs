@@ -28,11 +28,7 @@ import Data.List.Split
 -}
 data Phrase =
   Phrase [String]
-  deriving (Eq)
-instance Show Phrase where
-  show (Phrase []) = []
-  show (Phrase [x]) = x
-  show (Phrase (x:xs)) = x ++ " " ++ show (Phrase xs)
+  deriving (Eq, Show, Read)
 
 {-|
   Custom data type to save a pair of an arbitrary prefix
@@ -40,7 +36,7 @@ instance Show Phrase where
 -}
 data DisjointMarkovToken =
   DisjointMarkovToken ([String], String)
-  deriving (Eq, Show)
+  deriving (Eq, Show, Read)
 
 {-|
   Custom data type to save a pair of an arbitrary prefix
@@ -49,7 +45,7 @@ data DisjointMarkovToken =
 -}
 data MarkovToken =
   MarkovToken ([String], [String])
-  deriving (Eq, Show)
+  deriving (Eq, Show, Read)
 
 {-|
   Normalizes a given word with the following criteria:
