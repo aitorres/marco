@@ -39,8 +39,10 @@ marco train foldername context_length
 
 Where
 
-* *filename* is the (absolute or relative) path to a file to be used as the base text
+* *foldername* is the (absolute or relative) path to a folder with the files to be used as the base texts
 * *context_length* is the amount of words to be considered as a "unit" in order to find the next suffix
+
+For training to be successful, you need to save one or several `.txt` files within the specified folder (we suggest using the `data` folder in the repository).
 
 ### Generating text
 
