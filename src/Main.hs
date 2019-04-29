@@ -38,7 +38,6 @@ getRandomElement x = do
 -}
 getNewPhrase :: [MarkovToken] -> Phrase -> [String] -> String -> Int -> IO (String)
 getNewPhrase toks phrase first_prefix str max = do
-  putStrLn $ "so far, you've got: " ++ str
   let suffixes = getPrefixSuffixes' toks first_prefix
   case length suffixes of
     0 -> do
