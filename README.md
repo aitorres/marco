@@ -4,7 +4,7 @@ A Markov chains based poet bot.
 
 ## Changelog
 
-The current version is **version 0.2.0.0**. [Click here to read the changelog](CHANGELOG.md).
+The current version is **version 0.2.0.1**. [Click here to read the changelog](CHANGELOG.md).
 
 ## Build
 

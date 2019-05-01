@@ -1,5 +1,9 @@
 # Revision history for marco
 
+## 0.2.0.1 -- 2019-04-29
+
+* Reduces unnecesary application of a normalization function.
+
 ## 0.2.0.0 -- 2019-04-28
 
 * Modifies data structures to make them derive Read and Show, in order to easily keep record of them as files.

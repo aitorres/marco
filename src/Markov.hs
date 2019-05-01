@@ -58,8 +58,7 @@ normalize =
   let lowerize = map toLower
       removeStartSymbols = dropWhile (not . isAlpha)
       removeEndSymbols = reverse . removeStartSymbols . reverse
-      removeSymbols = removeStartSymbols . removeEndSymbols
-  in  lowerize . removeSymbols
+  in  lowerize . removeEndSymbols
 
 {-|
   Given a phrase as a string, separates all the tokens into single,
