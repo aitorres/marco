@@ -2,7 +2,7 @@
 
 A Markov-chains based text generator (currently a work in progress).
 
-Currently at **version 0.2.0.2**. [Click here to read the changelog](CHANGELOG.md).
+Currently at **version v0.2.0.2**. [Click here to read the changelog](CHANGELOG.md).
 
 ## Build
 
