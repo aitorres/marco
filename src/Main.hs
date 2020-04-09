@@ -13,21 +13,23 @@ and echoes such new phrase through the standard output.
 
 module Main (main) where
 
-import Data.List.Split
-import Data.Time.Clock.POSIX
+import           Control.Monad         (when)
 
-import System.Directory
-import System.Environment
-import System.Exit
-import System.IO
-import System.Random
+import           Data.List.Split
+import           Data.Time.Clock.POSIX
 
-import Markov
+import           System.Directory
+import           System.Environment
+import           System.Exit
+import           System.IO
+import           System.Random
+
+import           Markov
 
 {-|
   Returns a random element out of an array.
 -}
-getRandomElement :: [a] -> IO (a)
+getRandomElement :: [a] -> IO a
 getRandomElement x = do
   i <- randomRIO (0, length x - 1)
   return (x !! i)
@@ -36,20 +38,14 @@ getRandomElement x = do
   Procedurally generates a new phrase, given base string encoded
   as a Phrase, an initial prefix and an approx. max length
 -}
-getNewPhrase :: [MarkovToken] -> Phrase -> [String] -> String -> Int -> IO (String)
+getNewPhrase :: [MarkovToken] -> Phrase -> [String] -> String -> Int -> IO String
 getNewPhrase toks phrase first_prefix str max = do
   let suffixes = getPrefixSuffixes' toks first_prefix
-  case length suffixes of
-    0 -> do
-      return str
-    otherwise -> do
-      case max of
-        0 ->
-          return str
-        otherwise -> do
-          suffix <- getRandomElement suffixes
-          let new_prefix = (tail first_prefix) ++ [suffix]
-          getNewPhrase toks phrase new_prefix (str ++ " " ++ suffix) (max - 1)
+  if null suffixes || max == 0 then return str
+  else do
+    suffix <- getRandomElement suffixes
+    let new_prefix = tail first_prefix ++ [suffix]
+    getNewPhrase toks phrase new_prefix (str ++ " " ++ suffix) (max - 1)
 
 {-|
   Prints a small help message, containing the proper usage of the application
@@ -57,19 +53,19 @@ getNewPhrase toks phrase first_prefix str max = do
 printHelp :: IO ()
 printHelp = do
   progName <- getProgName
+  -- TODO: Explicar las dos funciones del programa
   putStrLn $ progName ++ " usage: " ++ progName ++ " <filename> <context length> <max length>"
 
 {-|
   Performs a minor check of the arguments received from command line. If invalid,
   shows the help message and quits.
 -}
-checkArgs :: [String] -> IO (String)
+checkArgs :: [String] -> IO String
 checkArgs args = do
-  let trainSyntax = (length args == 3) && (args !! 0 == "train")
-  let genSyntax = (length args == 2) && (args !! 0 == "generate")
+  let trainSyntax = (length args == 3) && (head args == "train")
+  let genSyntax = (length args == 2) && (head args == "generate")
 
-  if (elem True [trainSyntax, genSyntax]) then
-    return (args !! 0)
+  if trainSyntax || genSyntax then return (head args)
   else do
     printHelp
     exitFailure
@@ -87,18 +83,15 @@ properPrintLn str = do
   Joins the content of several training data files
   into one string to be parsed afterwards.
 -}
-foldTrainingData :: FilePath -> [FilePath] -> IO (String)
-foldTrainingData directory files = do
-  let targetFile = (directory ++ "/" ++ (files !! 0)) in
-    case (length files) of
-      0 -> return ""
-      1 -> do
-        file <- readFile targetFile
-        return file
-      otherwise -> do
-        file <- readFile targetFile
-        remainingFiles <- foldTrainingData directory (tail files)
-        return (file ++ remainingFiles)
+foldTrainingData :: FilePath -> [FilePath] -> IO String
+foldTrainingData directory files =
+  let targetFile = (directory ++ "/" ++ head files) in
+    if null files then return ""
+    else if length files == 1 then readFile targetFile
+    else do
+      file <- readFile targetFile
+      remainingFiles <- foldTrainingData directory (tail files)
+      return (file ++ remainingFiles)
 
 {-|
   Trains the markov generator with the contents of a given folder.
@@ -106,16 +99,16 @@ foldTrainingData directory files = do
 -}
 train :: FilePath -> Int -> IO ()
 train directory n = do
-  properPrintLn $ "Reading data files content and training into proper data structures"
+  properPrintLn "Reading data files content and training into proper data structures"
   pre_proc_start_time <- getPOSIXTime
 
   foundFiles <- getDirectoryContents directory
   let files = [x | x <- foundFiles, "txt" == last (splitOn "." x) ]
 
-  properPrintLn $ "Training files loaded into memory"
+  properPrintLn "Training files loaded into memory"
   trainingData <- foldTrainingData directory files
 
-  properPrintLn $ "Training files parsed together. Training in process..."
+  properPrintLn "Training files parsed together. Training in process..."
   let phrase = stringToPhrase trainingData
   let tokens = getPhraseTokens phrase n
   let prefixes = getPhrasePrefixes' tokens
@@ -127,7 +120,7 @@ train directory n = do
   writeFile "trained-data/prefixes.txt" (show prefixes)
 
   pre_proc_finish_time <- getPOSIXTime
-  properPrintLn $ "Time spent (training): " ++ (show (pre_proc_finish_time - pre_proc_start_time)) ++ "\n"
+  properPrintLn $ "Time spent (training): " ++ show (pre_proc_finish_time - pre_proc_start_time) ++ "\n"
 
 {-|
   Checks if the required training files exist, and stops execution if they
@@ -140,12 +133,9 @@ checkTrainingFiles = do
   checkPrefixes <- doesFileExist "trained-data/prefixes.txt"
 
   let checks = [checkTokens, checkPhrase, checkPrefixes]
-  case (elem False checks) of
-    True -> do
-      properPrintLn $ "Training data not found. Check help and train marco first."
-      exitFailure
-    otherwise ->
-      return ()
+  when (False `elem` checks) $ do
+    properPrintLn "Training data not found. Check help and train marco first."
+    exitFailure
 
 {-|
   Main client for the application.
@@ -171,7 +161,7 @@ main = do
       let max = read raw_max :: Int
 
       -- Starts the new text generation
-      properPrintLn $ "Phrase generation: ENGAGED"
+      properPrintLn "Phrase generation: ENGAGED"
 
       -- If the training files exist, reads and parses them
       checkTrainingFiles
@@ -189,8 +179,8 @@ main = do
       first_prefix <- getRandomElement prefixes
       nphrase <- getNewPhrase tokens phrase first_prefix [] max
       proc_finish_time <- getPOSIXTime
-      properPrintLn $ "Phrase generation: COMPLETED"
-      properPrintLn $ "Time spent (generation): " ++ (show (proc_finish_time - proc_start_time)) ++ "\n"
+      properPrintLn "Phrase generation: COMPLETED"
+      properPrintLn $ "Time spent (generation): " ++ show (proc_finish_time - proc_start_time) ++ "\n"
 
       -- Reports the text and exits
       properPrintLn $ "Your phrase is: " ++ nphrase

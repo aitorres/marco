@@ -18,15 +18,15 @@ module Markov (
   getPrefixSuffixes'
 ) where
 
-import Data.Char
-import Data.List.Split
+import           Data.Char
+import           Data.List.Split
 
 {-|
   Custom data type to save a phrase as an array of separate,
   possibly normalized words. Implements a concrete instance of Show
   in order to print the phrase as faithfully as possible.
 -}
-data Phrase =
+newtype Phrase =
   Phrase [String]
   deriving (Eq, Show, Read)
 
@@ -34,7 +34,7 @@ data Phrase =
   Custom data type to save a pair of an arbitrary prefix
   and one associated suffix.
 -}
-data DisjointMarkovToken =
+newtype DisjointMarkovToken =
   DisjointMarkovToken ([String], String)
   deriving (Eq, Show, Read)
 
@@ -43,7 +43,7 @@ data DisjointMarkovToken =
   and an array of associated suffixes. Intended to be able to
   be formed as a "join" / "fold" of several DisjointMarkovToken instances.
 -}
-data MarkovToken =
+newtype MarkovToken =
   MarkovToken ([String], [String])
   deriving (Eq, Show, Read)
 
@@ -69,7 +69,7 @@ splitToArray [] = []
 splitToArray phrase =
   let wordStart = dropWhile (not . isAlpha) phrase
       (word, remainingPhrase) = span isAlpha wordStart
-  in  (normalize word) : (splitToArray remainingPhrase)
+  in  normalize word : splitToArray remainingPhrase
 
 {-|
   Given a phrase as a string, returns a proper Phrase instance.
@@ -82,7 +82,7 @@ stringToPhrase x = Phrase (splitToArray x)
   and all of their suffixes
 -}
 getPhraseTokens :: Phrase -> Int -> [MarkovToken]
-getPhraseTokens p n = compactSuffixArray $ (getSuffixArray p n)
+getPhraseTokens p n = compactSuffixArray $ getSuffixArray p n
 
 {-|
   Given a phrase, returns an array with arrays of strings, each with the possible prefixes.
@@ -126,7 +126,7 @@ getSuffixArray (Phrase words) n
     let prefix = take n words
         suffix = words !! n
         remainingWords = tail words
-    in  (DisjointMarkovToken (prefix, suffix)) : getSuffixArray (Phrase remainingWords) n
+    in  DisjointMarkovToken (prefix, suffix) : getSuffixArray (Phrase remainingWords) n
   | otherwise = []
 
 {-|
@@ -135,7 +135,7 @@ getSuffixArray (Phrase words) n
 -}
 compactSuffixArray :: [DisjointMarkovToken] -> [MarkovToken]
 compactSuffixArray arr =
-  let denseSuffixArray = [(MarkovToken (prefix, findAllSuffixes arr prefix)) | (DisjointMarkovToken (prefix, _)) <- arr]
+  let denseSuffixArray = [ MarkovToken (prefix, findAllSuffixes arr prefix) | DisjointMarkovToken (prefix, _) <- arr]
       dropDuplicates x =
         dropDupsAux x []
       dropDupsAux [] _ = []
@@ -149,5 +149,5 @@ compactSuffixArray arr =
   and a given prefix, returns an array of suffixes that correspond to such prefix.
 -}
 findAllSuffixes :: [DisjointMarkovToken] -> [String] -> [String]
-findAllSuffixes (arr) prefix =
+findAllSuffixes arr prefix =
   [b | (DisjointMarkovToken (a, b)) <- arr, a == prefix]
