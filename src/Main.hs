@@ -53,8 +53,8 @@ getNewPhrase toks phrase first_prefix str max = do
 printHelp :: IO ()
 printHelp = do
   progName <- getProgName
-  -- TODO: Explicar las dos funciones del programa
-  putStrLn $ progName ++ " usage: " ++ progName ++ " <filename> <context length> <max length>"
+  putStrLn $ progName ++ " usage (training): \t"   ++ progName ++ " train    <folder name> <context length>"
+  putStrLn $ progName ++ " usage (generation): \t" ++ progName ++ " generate <max length>"
 
 {-|
   Performs a minor check of the arguments received from command line. If invalid,
