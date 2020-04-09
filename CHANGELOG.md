@@ -1,5 +1,11 @@
 # Revision history for marco
 
+## v0.2.1.0 -- 2020-04-08
+
+- General refactor of the code, to improve performance and fix styling issues.
+- Updates required GHC version in Stack
+- Delete / change use of type aliases in the Markov implementation
+
 ## v0.2.0.2 -- 2020-04-08
 
 - `marco` now uses **stack** instead of just **cabal**.
