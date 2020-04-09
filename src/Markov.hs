@@ -22,30 +22,24 @@ import           Data.Char
 import           Data.List.Split
 
 {-|
-  Custom data type to save a phrase as an array of separate,
+  Custom type to save a phrase as an array of separate,
   possibly normalized words. Implements a concrete instance of Show
   in order to print the phrase as faithfully as possible.
 -}
-newtype Phrase =
-  Phrase [String]
-  deriving (Eq, Show, Read)
+type Phrase = [String]
 
 {-|
-  Custom data type to save a pair of an arbitrary prefix
+  Custom type to save a pair of an arbitrary prefix
   and one associated suffix.
 -}
-newtype DisjointMarkovToken =
-  DisjointMarkovToken ([String], String)
-  deriving (Eq, Show, Read)
+type DisjointMarkovToken = ([String], String)
 
 {-|
-  Custom data type to save a pair of an arbitrary prefix
+  Custom type to save a pair of an arbitrary prefix
   and an array of associated suffixes. Intended to be able to
   be formed as a "join" / "fold" of several DisjointMarkovToken instances.
 -}
-newtype MarkovToken =
-  MarkovToken ([String], [String])
-  deriving (Eq, Show, Read)
+type MarkovToken = ([String], [String])
 
 {-|
   Normalizes a given word with the following criteria:
@@ -75,7 +69,7 @@ splitToArray phrase =
   Given a phrase as a string, returns a proper Phrase instance.
 -}
 stringToPhrase :: String -> Phrase
-stringToPhrase x = Phrase (splitToArray x)
+stringToPhrase = splitToArray
 
 {-|
   Given a phrase, returns an array of MarkovTokens with all the prefixes
@@ -89,7 +83,7 @@ getPhraseTokens p n = compactSuffixArray $ getSuffixArray p n
 -}
 getPhrasePrefixes :: Phrase -> Int -> [[String]]
 getPhrasePrefixes p n =
-  [y | (MarkovToken (y, _)) <- getPhraseTokens p n]
+  [y | (y, _) <- getPhraseTokens p n]
 
 {-|
   Alternative version of getPhrasePrefixes: given an array of MarkovTokens, returns an array
@@ -97,14 +91,14 @@ getPhrasePrefixes p n =
 -}
 getPhrasePrefixes' :: [MarkovToken] -> [[String]]
 getPhrasePrefixes' toks =
-  [y | (MarkovToken (y, _)) <- toks]
+  [y | (y, _) <- toks]
 
 {-|
   Given a phrase and a prefix, returns such prefix suffixes if they exist.
 -}
 getPrefixSuffixes :: Phrase -> [String] -> [String]
 getPrefixSuffixes phrase prefix =
-  [x | y <- [b | MarkovToken (a, b) <- getPhraseTokens phrase (length prefix), a == prefix], x <- y]
+  [x | y <- [b | (a, b) <- getPhraseTokens phrase (length prefix), a == prefix], x <- y]
 
 {-|
   Alternative version of getPrefixSuffixes: given an array of MarkovTokens, and a
@@ -112,7 +106,7 @@ getPrefixSuffixes phrase prefix =
 -}
 getPrefixSuffixes' :: [MarkovToken] -> [String] -> [String]
 getPrefixSuffixes' toks prefix =
-  [x | y <- [b | MarkovToken (a, b) <- toks, a == prefix], x <- y]
+  [x | y <- [b | (a, b) <- toks, a == prefix], x <- y]
 
 {-|
   Given an array of strings (words) and a context length,
@@ -120,13 +114,13 @@ getPrefixSuffixes' toks prefix =
   corresponding suffix.
 -}
 getSuffixArray :: Phrase -> Int -> [DisjointMarkovToken]
-getSuffixArray (Phrase []) _ = []
-getSuffixArray (Phrase words) n
+getSuffixArray [] _ = []
+getSuffixArray words n
   | length words > n =
     let prefix = take n words
         suffix = words !! n
         remainingWords = tail words
-    in  DisjointMarkovToken (prefix, suffix) : getSuffixArray (Phrase remainingWords) n
+    in  (prefix, suffix) : getSuffixArray remainingWords n
   | otherwise = []
 
 {-|
@@ -135,7 +129,7 @@ getSuffixArray (Phrase words) n
 -}
 compactSuffixArray :: [DisjointMarkovToken] -> [MarkovToken]
 compactSuffixArray arr =
-  let denseSuffixArray = [ MarkovToken (prefix, findAllSuffixes arr prefix) | DisjointMarkovToken (prefix, _) <- arr]
+  let denseSuffixArray = [ (prefix, findAllSuffixes arr prefix) | (prefix, _) <- arr]
       dropDuplicates x =
         dropDupsAux x []
       dropDupsAux [] _ = []
@@ -150,4 +144,4 @@ compactSuffixArray arr =
 -}
 findAllSuffixes :: [DisjointMarkovToken] -> [String] -> [String]
 findAllSuffixes arr prefix =
-  [b | (DisjointMarkovToken (a, b)) <- arr, a == prefix]
+  [b | (a, b) <- arr, a == prefix]
